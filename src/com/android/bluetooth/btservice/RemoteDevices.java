@@ -49,6 +49,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.bluetooth.btservice;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
@@ -574,7 +580,7 @@ final class RemoteDevices {
         /**
          * @return the mIsCoordinatedSetMember
         */
-        private boolean isCoordinatedSetMember() {
+        boolean isCoordinatedSetMember() {
             synchronized (mObject) {
                 return mIsCoordinatedSetMember;
             }
@@ -887,10 +893,12 @@ final class RemoteDevices {
                                 + bdDevice.getAddress() + " addrValid "
                                 + device.mBdAddrValid);
                             break;
-                        case AbstractionLayer.BT_PROPERTY_ADV_AUDIO_ID_BD_ADDR:
+                        case AbstractionLayer.BT_PROPERTY_REM_DEV_IDENT_BD_ADDR:
                             device.mMapBdAddress = val;
-                            debugLog("BT_PROPERTY_ADV_AUDIO_ID_BD_ADDR Remote Address MAP is:"
+                            debugLog("BT_PROPERTY_REM_DEV_IDENT_BD_ADDR Remote Address MAP is:"
                                 + Utils.getAddressStringFromByte(val));
+                            break;
+
                         case AbstractionLayer.BT_PROPERTY_REMOTE_RSSI:
                             // RSSI from hal is in one byte
                             device.mRssi = val[0];
