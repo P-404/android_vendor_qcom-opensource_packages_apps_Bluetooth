@@ -141,6 +141,8 @@ public class HeadsetService extends ProfileService {
     private static final boolean DBG = true;
     private static final String DISABLE_INBAND_RINGING_PROPERTY =
             "persist.bluetooth.disableinbandringing";
+    private static final String DISABLE_CONNECT_AUDIO =
+            "persist.bluetooth.disableconnectaudio";
     private static final ParcelUuid[] HEADSET_UUIDS = {BluetoothUuid.HSP, BluetoothUuid.HFP};
     private static final int[] CONNECTING_CONNECTED_STATES =
             {BluetoothProfile.STATE_CONNECTING, BluetoothProfile.STATE_CONNECTED};
@@ -1049,9 +1051,14 @@ public class HeadsetService extends ProfileService {
                     }
                 } else {
                     HeadsetService service = getService(source);
-                    if (service != null) {
-                        enforceBluetoothPrivilegedPermission(service);
-                        defaultValue = service.connectAudio();
+                    if(!SystemProperties.getBoolean(DISABLE_CONNECT_AUDIO, false)) {
+                       Log.w(TAG, "Initiating connect Audio");
+                       if (service != null) {
+                          enforceBluetoothPrivilegedPermission(service);
+                          defaultValue = service.connectAudio();
+                       }
+                    } else {
+                         Log.w(TAG, "not initiating connect Audio");
                     }
                 }
                 receiver.send(defaultValue);
@@ -2164,6 +2171,8 @@ public class HeadsetService extends ProfileService {
             } else if (shouldPersistAudio()) {
                 boolean isPts = SystemProperties.getBoolean("vendor.bt.pts.certification", false);
                 if (!isPts) {
+                    mHfpA2dpSyncInterface.suspendLeAudio(HeadsetA2dpSync.
+                                                      A2DP_SUSPENDED_BY_CS_CALL);
                     int connectStatus = connectAudio(mActiveDevice);
                     if (connectStatus != BluetoothStatusCodes.SUCCESS) {
                         Log.e(TAG, "setActiveDevice: fail to connectAudio to " + mActiveDevice);

@@ -1535,7 +1535,7 @@ public class HeadsetStateMachine extends StateMachine {
                                   + " or A2Dp is playing, not allowing SCO, device=" + mDevice);
                         break;
                     }
-
+                    mHeadsetService.getHfpA2DPSyncInterface().suspendLeAudio(HeadsetA2dpSync.A2DP_SUSPENDED_BY_CS_CALL);
                     Log.w(TAG, "mIsSwbSupportedByRemote is " + mIsSwbSupportedByRemote);
 
                     if (mIsSwbSupportedByRemote && mHeadsetService.isSwbEnabled() &&
@@ -1748,7 +1748,6 @@ public class HeadsetStateMachine extends StateMachine {
             // has SCO, dont need to update teh Audio Manager
 
             setAudioParameters();
-            mSystemInterface.getAudioManager().setBluetoothScoOn(true);
             Message m = obtainMessage(SCO_RETRIAL_NOT_REQ);
             sendMessageDelayed(m, SCO_RETRIAL_REQ_TIMEOUT);
 

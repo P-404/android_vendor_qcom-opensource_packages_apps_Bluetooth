@@ -449,18 +449,23 @@ public class LeAudioService extends ProfileService {
 
         Log.d(TAG, "connect(): mPtsMediaAndVoice: " + mPtsMediaAndVoice +
                    ", mPtsTmapConfBandC: " + mPtsTmapConfBandC);
-
         if (!mPtsTmapConfBandC &&
-            (mPtsMediaAndVoice == 2 || mPtsMediaAndVoice == 3)) {
-            if (mCallAudio != null) {
-                mCallAudio.connect(device);
+            (mPtsMediaAndVoice == 1 || mPtsMediaAndVoice == 3)) {
+            if (mMediaAudio != null) {
+                if (mPtsMediaAndVoice == 3)
+                  mMediaAudio.connect(device, true);
+                else
+                  mMediaAudio.connect(device);
             }
         }
 
         if (!mPtsTmapConfBandC &&
-            (mPtsMediaAndVoice == 1 || mPtsMediaAndVoice == 3)) {
-            if (mMediaAudio != null) {
-                mMediaAudio.connect(device);
+            mPtsMediaAndVoice == 2) {
+            if (mCallAudio != null) {
+                Log.d(TAG, "connect(): Connecting call AUdio");
+                mCallAudio.connect(device);
+            } else {
+                Log.d(TAG, "call AUdio is null");
             }
         }
 
@@ -1585,7 +1590,7 @@ public class LeAudioService extends ProfileService {
     }
 
     @VisibleForTesting
-    synchronized void connectionStateChanged(BluetoothDevice device, int fromState,
+    synchronized public void connectionStateChanged(BluetoothDevice device, int fromState,
                                                      int toState) {
         Log.e(TAG, "connectionStateChanged: invocation. device=" + device
                 + " fromState=" + fromState + " toState=" + toState);
@@ -1727,7 +1732,7 @@ public class LeAudioService extends ProfileService {
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
             int toState = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
             int fromState = intent.getIntExtra(BluetoothProfile.EXTRA_PREVIOUS_STATE, -1);
-            connectionStateChanged(device, fromState, toState);
+            Log.d(TAG,"Connection state updated via api call, ignoring intent");
         }
     }
 
