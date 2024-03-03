@@ -296,6 +296,27 @@ public class MediaAudioIntf {
         return false;
     }
 
+    public boolean isCsipDevice(BluetoothDevice device) {
+        if(MediaAudio == null)
+            return false;
+
+        Class[] arg = new Class[1];
+        arg[0] = BluetoothDevice.class;
+
+        try {
+            Method isCsipDevice = MediaAudio.getDeclaredMethod("isCsipDevice", arg);
+            boolean ret = (boolean)isCsipDevice.invoke(mMediaAudio, device);
+            return ret;
+        } catch(IllegalAccessException e) {
+            Log.i(TAG, "Exception" + e);
+        } catch(NoSuchMethodException e) {
+            Log.i(TAG, "Exception" + e);
+        } catch(InvocationTargetException e) {
+            Log.i(TAG, "Exception" + e);
+        }
+        return false;
+    }
+
     public BluetoothCodecStatus getCodecStatus(BluetoothDevice device) {
         if(MediaAudio == null)
             return null;
@@ -351,6 +372,46 @@ public class MediaAudioIntf {
         try {
             Method setCodecConfigPreference = MediaAudio.getDeclaredMethod("setCodecConfigPreference", arg);
             setCodecConfigPreference.invoke(mMediaAudio, device, codecConfig);
+        } catch(IllegalAccessException e) {
+            Log.i(TAG, "Exception" + e);
+        } catch(NoSuchMethodException e) {
+            Log.i(TAG, "Exception" + e);
+        } catch(InvocationTargetException e) {
+            Log.i(TAG, "Exception" + e);
+        }
+    }
+
+    public void enableGamingMode(BluetoothDevice device, int context) {
+        if(MediaAudio == null)
+            return;
+
+        Class[] arg = new Class[2];
+        arg[0] = BluetoothDevice.class;
+        arg[1] = Integer.class;
+
+        try {
+            Method enableGamingMode = MediaAudio.getDeclaredMethod("enableGamingMode", arg);
+            enableGamingMode.invoke(mMediaAudio, device, context);
+        } catch(IllegalAccessException e) {
+            Log.i(TAG, "Exception" + e);
+        } catch(NoSuchMethodException e) {
+            Log.i(TAG, "Exception" + e);
+        } catch(InvocationTargetException e) {
+            Log.i(TAG, "Exception" + e);
+        }
+    }
+
+    public void disableGamingMode(BluetoothDevice device, int context) {
+        if(MediaAudio == null)
+            return;
+
+        Class[] arg = new Class[2];
+        arg[0] = BluetoothDevice.class;
+        arg[1] = Integer.class;
+
+        try {
+            Method disableGamingMode = MediaAudio.getDeclaredMethod("disableGamingMode", arg);
+            disableGamingMode.invoke(mMediaAudio, device, context);
         } catch(IllegalAccessException e) {
             Log.i(TAG, "Exception" + e);
         } catch(NoSuchMethodException e) {

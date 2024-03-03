@@ -37,6 +37,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.os.ParcelUuid;
 import android.os.UserHandle;
 import android.util.Log;
 import com.android.bluetooth.a2dp.A2dpService;
@@ -117,6 +118,9 @@ import java.util.Objects;
 public class ActiveDeviceManager {
     private static final boolean DBG = true;
     private static final String TAG = "BluetoothActiveDeviceManager";
+
+    public static final ParcelUuid CAP_UUID =
+            ParcelUuid.fromString("00001853-0000-1000-8000-00805F9B34FB");
 
     // Message types for the handler
     private static final int MESSAGE_ADAPTER_ACTION_STATE_CHANGED = 1;
@@ -254,6 +258,10 @@ public class ActiveDeviceManager {
                         }
                         if (mLeAudioActiveDevice != null) {
                             LeAudioService leAudioService = mFactory.getLeAudioService();
+                            if (leAudioService == null) {
+                                 Log.d(TAG, "LeAudioService is NULL");
+                                 break;
+                            }
                             int groupId = leAudioService.getGroupId(mLeAudioActiveDevice);
                             if (leAudioService.getGroupId(device) == groupId) {
                                 Log.d(TAG, "Lead device is already active");
@@ -277,7 +285,8 @@ public class ActiveDeviceManager {
                         }
                         int mMediaProfile =
                             getCurrentActiveProfile(ApmConstIntf.AudioFeatures.MEDIA_AUDIO);
-                        if (mMediaProfile == ApmConstIntf.AudioProfiles.A2DP) {
+                        if (mMediaProfile == ApmConstIntf.AudioProfiles.NONE ||
+                                    mMediaProfile == ApmConstIntf.AudioProfiles.A2DP) {
                             mLeAudioActiveDevice = null;
                            if (DBG) {
                               Log.d(TAG, "cuurent active profile is A2DP"
@@ -808,6 +817,7 @@ public class ActiveDeviceManager {
                 Log.d(TAG, "LEA device is source : " + bleDeviceInfo.isSource());
                 mWiredDeviceConnected = false;
                 BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+                boolean isDuMoEnabled = Utils.isDualModeAudioEnabled();
                 BluetoothDevice dev = adapter.getRemoteDevice(bleDeviceInfo.getAddress());
                 ActiveDeviceManagerServiceIntf activeDeviceManager =
                                                     ActiveDeviceManagerServiceIntf.get();
@@ -818,7 +828,8 @@ public class ActiveDeviceManager {
                        activeDeviceManager.getActiveDevice(ApmConstIntf.AudioFeatures.CALL_AUDIO);
                     Log.d(TAG, "LEA active dev: " + dev + ", absolute device:" + AbsDevice);
                     Log.d(TAG, "current active dev:" + activeDevice);
-                    if (Objects.equals(dev,activeDevice) && bleDeviceInfo.isSource()) {
+                    if ((Objects.equals(dev,activeDevice) && bleDeviceInfo.isSource()) ||
+                        (isDuMoEnabled && (Objects.equals(dev,AbsDevice) && bleDeviceInfo.isSource()))) {
                         Log.d(TAG, "broadcast LEA device address: " + activeDevice);
                         broadcastLeActiveDeviceChange(AbsDevice);
                         onLeActiveDeviceChange(AbsDevice);
@@ -849,6 +860,8 @@ public class ActiveDeviceManager {
 
                 if (deviceInfo.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) {
                    Log.d(TAG, "BLE Device is removed");
+                   Log.d(TAG, "Setting mLeAudioActiveDevice Null");
+                   mLeAudioActiveDevice = null;
                    hasRemovedBleDevice = true;
                    bleDeviceInfo = deviceInfo;
                 }
@@ -892,7 +905,7 @@ public class ActiveDeviceManager {
             filter.addAction(BluetoothHeadset.ACTION_ACTIVE_DEVICE_CHANGED);
         }
         filter.addAction(BluetoothHearingAid.ACTION_ACTIVE_DEVICE_CHANGED);
-        mAdapterService.registerReceiver(mReceiver, filter);
+        mAdapterService.registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
 
         mAudioManager.registerAudioDeviceCallback(mAudioManagerAudioDeviceCallback, mHandler);
     }
@@ -1072,7 +1085,12 @@ public class ActiveDeviceManager {
         int groupId = -1;
         CsipWrapper csipWrapper = CsipWrapper.getInstance();
         if (device != null) {
-            groupId = csipWrapper.getRemoteDeviceGroupId(device, null);
+            ParcelUuid uuid = null;
+            if (csipWrapper != null &&
+                csipWrapper.checkIncludingServiceForDeviceGroup(device, CAP_UUID)) {
+                uuid = CAP_UUID;
+            }
+            groupId = csipWrapper.getRemoteDeviceGroupId(device, uuid);
         } else {
             groupId = INVALID_SET_ID;
         }

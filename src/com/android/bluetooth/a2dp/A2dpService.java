@@ -61,6 +61,7 @@ import com.android.bluetooth.btservice.ServiceFactory;
 import com.android.bluetooth.btservice.storage.DatabaseManager;
 import com.android.bluetooth.hfp.HeadsetService;
 import com.android.bluetooth.ba.BATService;
+import com.android.bluetooth.le_audio.LeAudioService;
 import com.android.bluetooth.gatt.GattService;
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.annotations.VisibleForTesting;
@@ -436,6 +437,19 @@ public class A2dpService extends ProfileService {
             Log.e(TAG, "Cannot connect to " + device + " : CONNECTION_POLICY_FORBIDDEN");
             return false;
         }
+
+        if(Utils.isDualModeAudioEnabled()) {
+            MediaAudioIntf mMediaAudio = MediaAudioIntf.get();
+            if(mMediaAudio != null && mMediaAudio.isCsipDevice(device)) {
+                LeAudioService mLeAudio = LeAudioService.getLeAudioService();
+                if(mLeAudio != null) {
+                    int connPolicy = mLeAudio.getConnectionPolicy(device);
+                    if(connPolicy != BluetoothProfile.CONNECTION_POLICY_FORBIDDEN)
+                        return false;
+                }
+            }
+        }
+
         synchronized (mVariableLock) {
             if (mAdapterService == null)
                 return false;
@@ -1015,8 +1029,6 @@ public class A2dpService extends ProfileService {
 
     public int setActiveDevice(BluetoothDevice device, boolean playReq) {
         HeadsetService headsetService = HeadsetService.getHeadsetService();
-        boolean isInCall = headsetService != null && headsetService.isScoOrCallActive();
-        boolean isFMActive = mAudioManager.getParameters("fm_status").contains("1");
 
         Log.w(TAG, "setActiveDevice(" + device +")");
         synchronized (mBtA2dpLock) {
@@ -1027,8 +1039,12 @@ public class A2dpService extends ProfileService {
         }
 
         if (setActiveDeviceA2dp(device)) {
-            if(playReq && !(isInCall || isFMActive)) {
-                mShoActive = true;
+            if(playReq) {
+                boolean isInCall = headsetService != null && headsetService.isScoOrCallActive();
+                boolean isFMActive = mAudioManager.getParameters("fm_status").contains("1");
+                if (!(isInCall || isFMActive)) {
+                    mShoActive = true;
+                }
             }
 
             if(mShoActive) {
@@ -1594,6 +1610,28 @@ public class A2dpService extends ProfileService {
                 default:
                   Log.e(TAG, cs4 + " is not a aptX profile mode feedback");
             }
+        }
+
+        if (cs4 > 0 && Utils.isDualModeAudioEnabled()) {
+            MediaAudioIntf mMediaAudio = MediaAudioIntf.get();
+            if(mMediaAudio == null) {
+                return;
+            }
+
+            switch((int)(cs4 & APTX_MODE_MASK)) {
+                case APTX_HQ:
+                  Log.d(TAG, "setCodecConfigPreference: disable Gaming from ALS");
+                  mMediaAudio.disableGamingMode(device, 0);
+                  break;
+
+                case APTX_LL:
+                  Log.d(TAG, "setCodecConfigPreference: enable Gaming from ALS");
+                  mMediaAudio.enableGamingMode(device, 0);
+                  break;
+                default:
+                  break;
+            }
+            return;
         }
 
         if (codecConfig == null) {
@@ -2420,7 +2458,7 @@ public class A2dpService extends ProfileService {
                 if (ApmConstIntf.getQtiLeAudioEnabled()) {
                     List<BluetoothDevice> defaultValue = new ArrayList<>(0);
                     MediaAudioIntf mMediaAudio = MediaAudioIntf.get();
-                    defaultValue = mMediaAudio.getDevicesMatchingConnectionStates(states); 
+                    defaultValue = mMediaAudio.getDevicesMatchingConnectionStates(states);
                     receiver.send(defaultValue);
                 } else {
                     A2dpService service = getService(source);
