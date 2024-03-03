@@ -2363,21 +2363,21 @@ public class HeadsetService extends ProfileService {
                     Log.i(TAG, "Dual mode is enabled");
                     ActiveDeviceManagerServiceIntf mActiveDeviceManager =
                             ActiveDeviceManagerServiceIntf.get();
-                    StreamAudioService mStreamAudioService =
-                            StreamAudioService.getStreamAudioService();
+                    // StreamAudioService mStreamAudioService =
+                    //         StreamAudioService.getStreamAudioService();
                     if (mActiveDeviceManager != null) {
                        mTempDualModeActiveDevice =
                              mActiveDeviceManager.getActiveAbsoluteDevice(ApmConstIntf.AudioFeatures.CALL_AUDIO);
                     }
-                    if (mStreamAudioService != null) {
-                       Log.i(TAG, "Setting ACM null device");
-                       int ret =
-                             mStreamAudioService.setActiveDevice(null,
-                                                                 BAP_CALL,
-                                                                 false);
-			           mHfpA2dpSyncInterface.suspendLeAudio(HeadsetA2dpSync.
-                                                       A2DP_SUSPENDED_BY_CS_CALL);
-                    }
+                    // if (mStreamAudioService != null) {
+                    //    Log.i(TAG, "Setting ACM null device");
+                    //    int ret =
+                    //          mStreamAudioService.setActiveDevice(null,
+                    //                                              BAP_CALL,
+                    //                                              false);
+			        //    mHfpA2dpSyncInterface.suspendLeAudio(HeadsetA2dpSync.
+                    //                                    A2DP_SUSPENDED_BY_CS_CALL);
+                    // }
                     if (mTempDualModeActiveDevice != null) {
                         int ret  = setActiveDeviceHF(mTempDualModeActiveDevice);
                         if (ret == ActiveDeviceManagerServiceIntf.SHO_SUCCESS) {
@@ -2418,16 +2418,16 @@ public class HeadsetService extends ProfileService {
             phoneStateChanged(0, 0, HeadsetHalConstants.CALL_STATE_IDLE, "", 0, "", true);
         }
         if (Utils.isDualModeAudioEnabled()) {
-           StreamAudioService mStreamAudioService =
-                       StreamAudioService.getStreamAudioService();
+        //    StreamAudioService mStreamAudioService =
+        //                StreamAudioService.getStreamAudioService();
            if (mTempDualModeActiveDevice != null) {
-               if (mStreamAudioService != null) {
-                   Log.i(TAG, "Setting ACM device after voip");
-                   int ret =
-                        mStreamAudioService.setActiveDevice(mTempDualModeActiveDevice,
-                                                            BAP_CALL,
-                                                            false);
-               }
+            //    if (mStreamAudioService != null) {
+                //    Log.i(TAG, "Setting ACM device after voip");
+                //    int ret =
+                //         mStreamAudioService.setActiveDevice(mTempDualModeActiveDevice,
+                //                                             BAP_CALL,
+                //                                             false);
+            //    }
                setActiveDeviceHF(null);
                mTempDualModeActiveDevice = null;
            }
